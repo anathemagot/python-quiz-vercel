@@ -11,6 +11,13 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
+    console.log(process.env.SUPABASE_URL)
+    console.log(process.env.SUPABASE_KEY)
+    console.log(nombre)
+    console.log(numero_de_control)
+    console.log(puntaje)
+    console.log(total)
+
     try {
         const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/resultados`, {
             method: 'POST',
