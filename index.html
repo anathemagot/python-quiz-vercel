@@ -37,6 +37,13 @@
             padding: 40px 20px 80px;
         }
 
+        body.no-select {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
         body::before {
             content: '';
             position: fixed;
@@ -639,6 +646,26 @@
             color: #000;
         }
 
+
+        /* ── Anti-cheat ── */
+        .warn-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent3);
+            background: rgba(255, 217, 61, 0.1);
+            border: 1px solid rgba(255, 217, 61, 0.3);
+            border-radius: 20px;
+            padding: 4px 12px;
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 100;
+            display: none;
+        }
+
         @keyframes fadeDown {
             from {
                 opacity: 0;
@@ -666,6 +693,7 @@
 </head>
 
 <body>
+    <span class="warn-badge" id="warn-badge">⚠ <span id="warn-count">0</span>/3 advertencias</span>
     <div class="container">
         <header>
             <span class="label">// Python Challenge</span>
@@ -726,17 +754,33 @@
                 <div id="review-list"></div>
             </div>
         </div>
+
+        <!-- Anti-cheat warning modal -->
+        <div id="cheat-modal"
+            style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center;">
+            <div
+                style="background:#16161a; border:1px solid #ff6b6b; border-radius:16px; padding:40px 36px; max-width:420px; width:90%; text-align:center; animation:fadeUp 0.3s ease;">
+                <div style="font-size:2.5rem; margin-bottom:16px;">⚠️</div>
+                <h2 style="font-size:1.3rem; font-weight:800; color:#ff6b6b; margin-bottom:10px;">Salida detectada</h2>
+                <p id="cheat-msg"
+                    style="font-family:'JetBrains Mono',monospace; font-size:0.83rem; color:#6b6b80; line-height:1.6; margin-bottom:24px;">
+                </p>
+                <div id="cheat-counter"
+                    style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:#ffd93d; margin-bottom:20px;">
+                </div>
+                <button onclick="closeWarning()"
+                    style="background:#00e5a0; color:#000; border:none; padding:11px 28px; border-radius:8px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; cursor:pointer;">Entendido,
+                    continuar</button>
+            </div>
+        </div>
     </div>
 
     <script>
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  CONFIGURACIÓN SUPABASE — reemplaza estos 2 valores
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        const SUPABASE_URL = 'https://rruysfviqzrvaycnjbqu.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJydXlzZnZpcXpydmF5Y25qYnF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjMzMzcsImV4cCI6MjA4OTQzOTMzN30.0g5P0hO1fxpNfNYpZFR58SrJCqMbL40xol0xSpQTLes';
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+        const SUPABASE_URL = 'https://TU_PROJECT_ID.supabase.co';
+        const SUPABASE_KEY = 'TU_ANON_KEY';
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         async function guardarResultado(nombre, numero_de_control, puntaje, total) {
@@ -761,7 +805,7 @@
         const Q = [
             { title: "Aritmética básica", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="num">2</span> + <span class="num">3</span> * <span class="num">4</span>)`, options: ["20", "14", "24", "10"], correct: 1, explanation: "Multiplicación primero: 3×4=12, luego 2+12=14." },
             { title: "División entera y módulo", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="num">17</span> // <span class="num">5</span>, <span class="num">17</span> % <span class="num">5</span>)`, options: ["3 2", "3.4 2", "3 3", "4 2"], correct: 0, explanation: "// es división entera: 17//5=3. % es módulo (resto): 17%5=2." },
-            // { title: "String repetición", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="str">"ha"</span> * <span class="num">3</span>)`, options: ["ha ha ha", "hahaha", "ha*3", "3ha"], correct: 1, explanation: '"ha" * 3 repite el string 3 veces: "hahaha".' },
+            { title: "String repetición", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="str">"ha"</span> * <span class="num">3</span>)`, options: ["ha ha ha", "hahaha", "ha*3", "3ha"], correct: 1, explanation: '"ha" * 3 repite el string 3 veces: "hahaha".' },
             // { title: "Tipo de dato", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="fn">type</span>(<span class="num">3.14</span>))`, options: ["&lt;class 'int'&gt;", "&lt;class 'float'&gt;", "&lt;class 'double'&gt;", "&lt;class 'number'&gt;"], correct: 1, explanation: "3.14 es un número decimal, por lo tanto es de tipo float." },
             // { title: "Booleano y comparación", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="num">5</span> == <span class="num">5.0</span>)`, options: ["False", "True", "Error", "None"], correct: 1, explanation: "Python compara valores, no tipos. 5 y 5.0 son iguales en valor → True." },
             // { title: "len() en string", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="fn">len</span>(<span class="str">"Python"</span>))`, options: ["5", "6", "7", "8"], correct: 1, explanation: '"Python" tiene 6 caracteres: P-y-t-h-o-n.' },
@@ -818,6 +862,10 @@
             if (!playerName || !playerControl) return;
             document.getElementById('name-screen').classList.add('hide');
             document.getElementById('quiz-wrapper').style.display = 'block';
+            quizActive = true;
+            warnings = 0;
+            document.body.classList.add('no-select');
+            document.getElementById('warn-badge').style.display = 'none';
             render();
         }
 
@@ -903,6 +951,8 @@
         async function showScore() {
             document.getElementById('quiz-wrapper').style.display = 'none';
 
+            quizActive = false;
+            document.body.classList.remove('no-select');
             const screen = document.getElementById('score-screen');
             screen.classList.add('show');
 
@@ -953,8 +1003,97 @@
             </div>`).join('');
         }
 
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  ANTI-TRAMPA
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let warnings = 0;
+        const MAX_WARNINGS = 3;
+        let quizActive = false; // solo activo durante el quiz
+
+        // ── Bloquear clic derecho ────────────────────────────────
+        document.addEventListener('contextmenu', e => {
+            if (quizActive) e.preventDefault();
+        });
+
+        // ── Bloquear copy / paste / cut ──────────────────────────
+        ['copy', 'paste', 'cut'].forEach(evt => {
+            document.addEventListener(evt, e => {
+                if (quizActive) e.preventDefault();
+            });
+        });
+
+        // ── Bloquear F12, Ctrl+Shift+I/J/C/U y Ctrl+C/X/V/A ───
+        document.addEventListener('keydown', e => {
+            if (!quizActive) return;
+            const blocked =
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+                (e.ctrlKey && ['U', 'C', 'X', 'V', 'A', 'S'].includes(e.key.toUpperCase()));
+            if (blocked) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        // ── Bloquear selección de texto con mouse ────────────────
+        document.addEventListener('selectstart', e => {
+            if (quizActive) e.preventDefault();
+        });
+
+        // ── Bloquear drag de texto ───────────────────────────────
+        document.addEventListener('dragstart', e => {
+            if (quizActive) e.preventDefault();
+        });
+
+        // ── Detectar cambio de tab / minimizar ventana ───────────
+        document.addEventListener('visibilitychange', () => {
+            if (!quizActive || document.visibilityState !== 'hidden') return;
+            warnings++;
+            updateWarnBadge();
+            if (warnings >= MAX_WARNINGS) {
+                terminateExam();
+            } else {
+                showWarning(
+                    `Saliste de la ventana del examen. Esto quedará registrado.`,
+                    `Advertencia ${warnings} de ${MAX_WARNINGS}. Al llegar a 3 el examen terminará automáticamente.`
+                );
+            }
+        });
+
+        function updateWarnBadge() {
+            const badge = document.getElementById('warn-badge');
+            const count = document.getElementById('warn-count');
+            badge.style.display = 'inline-flex';
+            count.textContent = warnings;
+        }
+
+        function showWarning(msg, counter) {
+            document.getElementById('cheat-msg').textContent = msg;
+            document.getElementById('cheat-counter').textContent = counter;
+            const modal = document.getElementById('cheat-modal');
+            modal.style.display = 'flex';
+        }
+
+        function closeWarning() {
+            document.getElementById('cheat-modal').style.display = 'none';
+        }
+
+        function terminateExam() {
+            quizActive = false;
+            document.getElementById('cheat-modal').style.display = 'none';
+            document.getElementById('quiz-wrapper').style.display = 'none';
+            // Force show score with penalty note
+            score = 0;
+            showScore();
+            setTimeout(() => {
+                document.getElementById('score-msg').textContent = '🚫 Examen cancelado';
+                document.getElementById('score-sub').textContent = 'Se detectaron demasiadas salidas de ventana';
+            }, 200);
+        }
+
         function restart() {
-            current = 0; score = 0; results = []; playerName = ''; playerControl = '';
+            current = 0; score = 0; results = []; playerName = ''; playerControl = ''; quizActive = false; warnings = 0; document.getElementById('warn-badge').style.display = 'none'; document.body.classList.remove('no-select');
             document.getElementById('score-screen').classList.remove('show');
             document.getElementById('name-screen').classList.remove('hide');
             nameInput.value = '';
