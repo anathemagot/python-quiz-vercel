@@ -4,7 +4,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Método no permitido' });
     }
 
-    const { nombre, numero_de_control, puntaje, total } = req.body;
+    const { nombre, numero_de_control, puntaje, total, respuestas } = req.body;
 
     // Validación básica
     if (!nombre || !numero_de_control || puntaje === undefined || total === undefined) {
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.SUPABASE_KEY}`,
                 'Prefer': 'return=minimal'
             },
-            body: JSON.stringify({ nombre, numero_de_control, puntaje, total })
+            body: JSON.stringify({ nombre, numero_de_control, puntaje, total, respuestas })
         });
 
         if (!response.ok) {
