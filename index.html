@@ -850,34 +850,55 @@
             const letters = ['A', 'B', 'C', 'D'];
 
             area.innerHTML = `
-            <div class="question-card active">
-              <div class="q-header">
-                <span class="q-num">// ${current + 1} de ${Q.length}</span>
-                <span class="q-title">${q.title}</span>
-                <span class="difficulty ${diffMap[q.difficulty]}">${diffLabel[q.difficulty]}</span>
-              </div>
-              <pre>${q.highlight}</pre>
-              <p class="options-label">¿Cuál es el output?</p>
-              <div class="options">
-                ${q.options.map((opt, i) => `
-                  <button class="option" onclick="selectAnswer(${i})" id="opt-${i}">
-                    <span class="opt-letter">${letters[i]}</span>
-                    <span class="opt-text">${opt}</span>
-                  </button>
-                `).join('')}
-              </div>
-              <div class="feedback" id="feedback"></div>
-              <div class="nav">
-                <button class="btn" id="next-btn" onclick="nextQ()">
-                  ${current < Q.length - 1 ? 'Siguiente →' : 'Ver resultados'}
-                </button>
-              </div>
-            </div>`;
+    <div class="question-card active">
+      <div class="q-header">
+        <span class="q-num">// ${current + 1} de ${Q.length}</span>
+        <span class="q-title">${q.title}</span>
+        <span class="difficulty ${diffMap[q.difficulty]}">${diffLabel[q.difficulty]}</span>
+      </div>
+
+      <div style="position:relative;">
+        <pre>${q.highlight}</pre>
+        <div style="
+          position: absolute; inset: 0;
+          pointer-events: none;
+          overflow: hidden;
+          border-radius: 8px;
+          display: flex; flex-direction: column;
+          justify-content: center; align-items: center; gap: 8px;
+        ">
+          ${Array(6).fill(`
+            <span style="
+              font-family: 'JetBrains Mono', monospace;
+              font-size: 11px; font-weight: 700;
+              color: rgba(255,255,255,0.09);
+              letter-spacing: 2px; white-space: nowrap;
+              transform: rotate(-20deg); display: block;
+            ">${playerName} &nbsp;·&nbsp; ${playerControl}</span>
+          `).join('')}
+        </div>
+      </div>
+
+      <p class="options-label">¿Cuál es el output?</p>
+      <div class="options">
+        ${q.options.map((opt, i) => `
+          <button class="option" onclick="selectAnswer(${i})" id="opt-${i}">
+            <span class="opt-letter">${letters[i]}</span>
+            <span class="opt-text">${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="nav">
+        <button class="btn" id="next-btn" onclick="nextQ()">
+          ${current < Q.length - 1 ? 'Siguiente →' : 'Ver resultados'}
+        </button>
+      </div>
+    </div>`;
 
             updateProgress();
             answered = false;
         }
-
         function selectAnswer(idx) {
             if (answered) return;
             answered = true;
