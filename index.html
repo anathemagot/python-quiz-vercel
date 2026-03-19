@@ -837,6 +837,7 @@
             warnings = 0;
             document.body.classList.add('no-select');
             document.getElementById('warn-badge').style.display = 'none';
+            addWatermark();
             render();
         }
 
@@ -983,7 +984,20 @@
             </div>`).join('');
         }
 
-
+        // Agregar después de startQuiz()
+        function addWatermark() {
+            const wm = document.createElement('div');
+            wm.style.cssText = `
+                position: fixed; inset: 0; pointer-events: none; z-index: 999;
+                display: flex; align-items: center; justify-content: center;
+                font-family: 'JetBrains Mono', monospace; font-size: 14px;
+                color: rgba(255,255,255,0.06); transform: rotate(-30deg);
+                white-space: nowrap; font-weight: 700; letter-spacing: 2px;
+            `;
+            wm.id = 'watermark';
+            wm.textContent = `${playerName} · ${playerControl}`.repeat(6);
+            document.body.appendChild(wm);
+        }
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  ANTI-TRAMPA
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
