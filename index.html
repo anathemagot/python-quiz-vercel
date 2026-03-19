@@ -837,7 +837,7 @@
             warnings = 0;
             document.body.classList.add('no-select');
             document.getElementById('warn-badge').style.display = 'none';
-            addWatermark();
+            // addWatermark();
             render();
         }
 
@@ -850,55 +850,34 @@
             const letters = ['A', 'B', 'C', 'D'];
 
             area.innerHTML = `
-    <div class="question-card active">
-      <div class="q-header">
-        <span class="q-num">// ${current + 1} de ${Q.length}</span>
-        <span class="q-title">${q.title}</span>
-        <span class="difficulty ${diffMap[q.difficulty]}">${diffLabel[q.difficulty]}</span>
-      </div>
-
-<div style="
-  position: absolute; inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  border-radius: 8px;
-">
-  ${Array(8).fill(0).map((_, i) => `
-    <div style="
-      position: absolute;
-      top: ${i * 22}px;
-      left: -20px; right: -20px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px; font-weight: 700;
-      color: rgba(255,255,255,0.13);
-      letter-spacing: 3px; white-space: nowrap;
-      transform: rotate(-10deg);
-      user-select: none;
-    ">${(`${playerName} · ${playerControl} · `).repeat(6)}</div>
-  `).join('')}
-</div>
-      </div>
-
-      <p class="options-label">¿Cuál es el output?</p>
-      <div class="options">
-        ${q.options.map((opt, i) => `
-          <button class="option" onclick="selectAnswer(${i})" id="opt-${i}">
-            <span class="opt-letter">${letters[i]}</span>
-            <span class="opt-text">${opt}</span>
-          </button>
-        `).join('')}
-      </div>
-      <div class="feedback" id="feedback"></div>
-      <div class="nav">
-        <button class="btn" id="next-btn" onclick="nextQ()">
-          ${current < Q.length - 1 ? 'Siguiente →' : 'Ver resultados'}
-        </button>
-      </div>
-    </div>`;
+            <div class="question-card active">
+              <div class="q-header">
+                <span class="q-num">// ${current + 1} de ${Q.length}</span>
+                <span class="q-title">${q.title}</span>
+                <span class="difficulty ${diffMap[q.difficulty]}">${diffLabel[q.difficulty]}</span>
+              </div>
+              <pre>${q.highlight}</pre>
+              <p class="options-label">¿Cuál es el output?</p>
+              <div class="options">
+                ${q.options.map((opt, i) => `
+                  <button class="option" onclick="selectAnswer(${i})" id="opt-${i}">
+                    <span class="opt-letter">${letters[i]}</span>
+                    <span class="opt-text">${opt}</span>
+                  </button>
+                `).join('')}
+              </div>
+              <div class="feedback" id="feedback"></div>
+              <div class="nav">
+                <button class="btn" id="next-btn" onclick="nextQ()">
+                  ${current < Q.length - 1 ? 'Siguiente →' : 'Ver resultados'}
+                </button>
+              </div>
+            </div>`;
 
             updateProgress();
             answered = false;
         }
+
         function selectAnswer(idx) {
             if (answered) return;
             answered = true;
