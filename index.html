@@ -385,18 +385,6 @@
             margin-top: 16px;
         }
 
-        .input-label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            display: block;
-            text-align: left;
-            max-width: 360px;
-            margin: 0 auto 6px;
-        }
-
         .name-card h2 {
             font-size: 1.4rem;
             font-weight: 800;
@@ -543,7 +531,6 @@
             margin-bottom: 40px;
         }
 
-        /* Saving indicator */
         .save-status {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.78rem;
@@ -645,7 +632,6 @@
             background: var(--accent);
             color: #000;
         }
-
 
         /* ── Anti-cheat ── */
         .warn-badge {
@@ -780,12 +766,33 @@
         //  Las keys están en Vercel — no se exponen aquí
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-        async function guardarResultado(nombre, numero_de_control, puntaje, total) {
+        /**
+         * Guarda el resultado completo en el backend.
+         *
+         * El payload enviado al endpoint /api/guardar tiene la forma:
+         * {
+         *   nombre:            string,
+         *   numero_de_control: string,
+         *   puntaje:           number,
+         *   total:             number,
+         *   respuestas: [
+         *     {
+         *       pregunta:        number,   // 1-based
+         *       titulo:          string,
+         *       correcta:        boolean,
+         *       respuesta_dada:  string,   // texto de la opción elegida
+         *       respuesta_correcta: string // texto de la opción correcta
+         *     },
+         *     ...
+         *   ]
+         * }
+         */
+        async function guardarResultado(nombre, numero_de_control, puntaje, total, respuestas) {
             try {
                 const res = await fetch('/api/guardar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre, numero_de_control, puntaje, total })
+                    body: JSON.stringify({ nombre, numero_de_control, puntaje, total, respuestas })
                 });
                 return res.ok;
             } catch (e) {
@@ -794,36 +801,38 @@
         }
 
         // ── Quiz data ────────────────────────────────────────────────
-        const Q = [
+        const BANK = [
             { title: "Aritmética básica", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="num">2</span> + <span class="num">3</span> * <span class="num">4</span>)`, options: ["20", "14", "24", "10"], correct: 1, explanation: "Multiplicación primero: 3×4=12, luego 2+12=14." },
             { title: "División entera y módulo", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="num">17</span> // <span class="num">5</span>, <span class="num">17</span> % <span class="num">5</span>)`, options: ["3 2", "3.4 2", "3 3", "4 2"], correct: 0, explanation: "// es división entera: 17//5=3. % es módulo (resto): 17%5=2." },
-            // { title: "String repetición", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="str">"ha"</span> * <span class="num">3</span>)`, options: ["ha ha ha", "hahaha", "ha*3", "3ha"], correct: 1, explanation: '"ha" * 3 repite el string 3 veces: "hahaha".' },
-            // { title: "Tipo de dato", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="fn">type</span>(<span class="num">3.14</span>))`, options: ["&lt;class 'int'&gt;", "&lt;class 'float'&gt;", "&lt;class 'double'&gt;", "&lt;class 'number'&gt;"], correct: 1, explanation: "3.14 es un número decimal, por lo tanto es de tipo float." },
-            // { title: "Booleano y comparación", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="num">5</span> == <span class="num">5.0</span>)`, options: ["False", "True", "Error", "None"], correct: 1, explanation: "Python compara valores, no tipos. 5 y 5.0 son iguales en valor → True." },
-            // { title: "len() en string", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="fn">len</span>(<span class="str">"Python"</span>))`, options: ["5", "6", "7", "8"], correct: 1, explanation: '"Python" tiene 6 caracteres: P-y-t-h-o-n.' },
-            // { title: "Concatenación de strings", difficulty: "easy", highlight: `a = <span class="str">"Hola"</span>\nb = <span class="str">" Mundo"</span>\n<span class="fn">print</span>(a + b)`, options: ["HolaMundo", "Hola Mundo", "Hola+Mundo", "Error"], correct: 1, explanation: 'Concatenar "Hola" + " Mundo" = "Hola Mundo".' },
-            // { title: "Variable reasignada", difficulty: "easy", highlight: `x = <span class="num">10</span>\nx = x + <span class="num">5</span>\nx = x * <span class="num">2</span>\n<span class="fn">print</span>(x)`, options: ["30", "25", "20", "15"], correct: 0, explanation: "x=10 → x=10+5=15 → x=15*2=30." },
-            // { title: "input() con int()", difficulty: "easy", highlight: `<span class="cm"># Asume que el usuario ingresa: 7</span>\nn = <span class="fn">int</span>(<span class="fn">input</span>())\n<span class="fn">print</span>(n * <span class="num">3</span>)`, options: ["777", "73", "21", "Error"], correct: 2, explanation: "int('7') convierte a entero. 7 * 3 = 21." },
-            // { title: "f-string básico", difficulty: "easy", highlight: `nombre = <span class="str">"Ana"</span>\nedad = <span class="num">25</span>\n<span class="fn">print</span>(<span class="str">f"</span>{nombre}<span class="str"> tiene </span>{edad}<span class="str"> años"</span>)`, options: ["nombre tiene edad años", "Ana tiene 25 años", "{nombre} tiene {edad} años", "Error"], correct: 1, explanation: "Las f-strings insertan el valor de las variables dentro de { }." },
-            // { title: "Índice negativo en lista", difficulty: "medium", highlight: `datos = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>]\n<span class="fn">print</span>(datos[-<span class="num">2</span>])`, options: ["30", "20", "40", "10"], correct: 0, explanation: "Índice -1 es el último (40), -2 es el penúltimo (30)." },
-            // { title: "While con break", difficulty: "medium", highlight: `i = <span class="num">0</span>\n<span class="kw">while</span> i < <span class="num">10</span>:\n    i += <span class="num">3</span>\n    <span class="kw">if</span> i == <span class="num">6</span>:\n        <span class="kw">break</span>\n<span class="fn">print</span>(i)`, options: ["9", "6", "3", "10"], correct: 1, explanation: "i: 0→3→6. Cuando i==6 se ejecuta break y sale. print(i) = 6." },
-            // { title: "Función con valor default", difficulty: "medium", highlight: `<span class="kw">def</span> <span class="fn">saludar</span>(nombre=<span class="str">"mundo"</span>):\n    <span class="fn">print</span>(<span class="str">f"Hola {nombre}"</span>)\n\n<span class="fn">saludar</span>()\n<span class="fn">saludar</span>(<span class="str">"Paco"</span>)`, options: ["Hola mundo\nHola Paco", "Hola\nHola Paco", "Error\nHola Paco", "Hola nombre\nHola Paco"], correct: 0, explanation: "Si no se pasa argumento, se usa el default 'mundo'. La segunda llamada usa 'Paco'." },
-            // { title: "for con range: ¿cuántas veces?", difficulty: "easy", highlight: `cuenta = <span class="num">0</span>\n<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):\n    cuenta += <span class="num">1</span>\n<span class="fn">print</span>(cuenta)`, options: ["4", "5", "6", "0"], correct: 1, explanation: "range(5) genera 0,1,2,3,4 → 5 iteraciones." },
-            // { title: "if / elif / else: ¿cuál rama?", difficulty: "easy", highlight: `x = <span class="num">0</span>\n<span class="kw">if</span> x > <span class="num">0</span>:\n    <span class="fn">print</span>(<span class="str">"positivo"</span>)\n<span class="kw">elif</span> x < <span class="num">0</span>:\n    <span class="fn">print</span>(<span class="str">"negativo"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"cero"</span>)`, options: ["positivo", "negativo", "cero", "Error"], correct: 2, explanation: "x=0 no es >0 ni <0, así que cae en el else → 'cero'." },
-            // { title: "while: valor final", difficulty: "easy", highlight: `n = <span class="num">1</span>\n<span class="kw">while</span> n < <span class="num">50</span>:\n    n = n * <span class="num">2</span>\n<span class="fn">print</span>(n)`, options: ["32", "48", "64", "50"], correct: 2, explanation: "n: 1→2→4→8→16→32→64. Cuando n=64 ya no cumple n<50 y sale." },
-            // { title: "for con continue", difficulty: "medium", highlight: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">6</span>):\n    <span class="kw">if</span> i % <span class="num">2</span> == <span class="num">0</span>:\n        <span class="kw">continue</span>\n    <span class="fn">print</span>(i, end=<span class="str">" "</span>)`, options: ["1 2 3 4 5", "2 4", "1 3 5", "1 2 3"], correct: 2, explanation: "continue salta la iteración cuando i es par. Solo se imprimen los impares: 1 3 5." },
-            // { title: "if anidado", difficulty: "medium", highlight: `edad = <span class="num">20</span>\ntiene_id = <span class="kw">True</span>\n<span class="kw">if</span> edad >= <span class="num">18</span>:\n    <span class="kw">if</span> tiene_id:\n        <span class="fn">print</span>(<span class="str">"Puede entrar"</span>)\n    <span class="kw">else</span>:\n        <span class="fn">print</span>(<span class="str">"Sin ID"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"Menor de edad"</span>)`, options: ["Sin ID", "Menor de edad", "Puede entrar", "Error"], correct: 2, explanation: "edad=20 ≥ 18 → primer if True. tiene_id=True → segundo if True → 'Puede entrar'." },
-            // { title: "for acumulando suma", difficulty: "easy", highlight: `suma = <span class="num">0</span>\n<span class="kw">for</span> n <span class="kw">in</span> [<span class="num">2</span>, <span class="num">4</span>, <span class="num">6</span>, <span class="num">8</span>]:\n    suma += n\n<span class="fn">print</span>(suma)`, options: ["24", "20", "10", "48"], correct: 1, explanation: "2+4+6+8 = 20." },
-            // { title: "while con resta: ¿qué imprime?", difficulty: "medium", highlight: `i = <span class="num">10</span>\n<span class="kw">while</span> i > <span class="num">0</span>:\n    i -= <span class="num">3</span>\n<span class="fn">print</span>(i)`, options: ["1", "0", "-2", "-1"], correct: 2, explanation: "i: 10→7→4→1→-2. Cuando i=-2 ya no cumple i>0 y sale el bucle." },
-            // { title: "for con break y else", difficulty: "medium", highlight: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):\n    <span class="kw">if</span> i == <span class="num">3</span>:\n        <span class="kw">break</span>\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"termino"</span>)\n<span class="fn">print</span>(i)`, options: ["termino\n3", "3", "termino", "4"], correct: 1, explanation: "El else del for solo corre si NO hubo break. Como sí hay break en i==3, el else se omite. Solo se imprime i=3." },
-            // { title: "if con operador or", difficulty: "medium", highlight: `dia = <span class="str">"sabado"</span>\n<span class="kw">if</span> dia == <span class="str">"sabado"</span> <span class="kw">or</span> dia == <span class="str">"domingo"</span>:\n    <span class="fn">print</span>(<span class="str">"fin de semana"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"dia laboral"</span>)`, options: ["dia laboral", "fin de semana", "sabado", "Error"], correct: 1, explanation: "dia=='sabado' es True. Con or basta una condición True → 'fin de semana'." },
-            // { title: "for dentro de for", difficulty: "medium", highlight: `cuenta = <span class="num">0</span>\n<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">3</span>):\n    <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(<span class="num">2</span>):\n        cuenta += <span class="num">1</span>\n<span class="fn">print</span>(cuenta)`, options: ["5", "6", "9", "3"], correct: 1, explanation: "El bucle exterior corre 3 veces, el interior 2 veces cada vez. Total: 3×2 = 6." },
-            // { title: "while: nunca entra", difficulty: "easy", highlight: `x = <span class="num">5</span>\n<span class="kw">while</span> x > <span class="num">10</span>:\n    x += <span class="num">1</span>\n<span class="fn">print</span>(x)`, options: ["5", "10", "11", "Error"], correct: 0, explanation: "x=5 no cumple x>10 desde el inicio. El bucle nunca se ejecuta. print(x) = 5." },
-            // { title: "if con not", difficulty: "medium", highlight: `llueve = <span class="kw">False</span>\n<span class="kw">if</span> <span class="kw">not</span> llueve:\n    <span class="fn">print</span>(<span class="str">"sin paraguas"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"lleva paraguas"</span>)`, options: ["lleva paraguas", "sin paraguas", "False", "Error"], correct: 1, explanation: "llueve=False. not False = True → entra al if → 'sin paraguas'." },
-            // { title: "range con paso negativo", difficulty: "medium", highlight: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>, <span class="num">0</span>, -<span class="num">1</span>):\n    <span class="fn">print</span>(i, end=<span class="str">" "</span>)`, options: ["5 4 3 2 1 0", "5 4 3 2 1", "4 3 2 1 0", "0 1 2 3 4 5"], correct: 1, explanation: "range(5, 0, -1) genera 5,4,3,2,1. El 0 no se incluye (es el stop exclusivo)." },
-            // { title: "break al encontrar valor", difficulty: "medium", highlight: `intentos = <span class="num">0</span>\nclave = <span class="str">"python"</span>\nrespuestas = [<span class="str">"java"</span>, <span class="str">"python"</span>, <span class="str">"c++"</span>]\n<span class="kw">for</span> r <span class="kw">in</span> respuestas:\n    intentos += <span class="num">1</span>\n    <span class="kw">if</span> r == clave:\n        <span class="kw">break</span>\n<span class="fn">print</span>(intentos)`, options: ["1", "2", "3", "0"], correct: 1, explanation: "1er intento: 'java' ≠ clave. 2do: 'python' == clave → break. intentos = 2." },
-            // { title: "if con and: ambas condiciones", difficulty: "medium", highlight: `temp = <span class="num">22</span>\nhumedad = <span class="num">80</span>\n<span class="kw">if</span> temp > <span class="num">20</span> <span class="kw">and</span> humedad > <span class="num">70</span>:\n    <span class="fn">print</span>(<span class="str">"bochornoso"</span>)\n<span class="kw">elif</span> temp > <span class="num">20</span>:\n    <span class="fn">print</span>(<span class="str">"caliente"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"fresco"</span>)`, options: ["caliente", "fresco", "bochornoso", "Error"], correct: 2, explanation: "temp=22>20 (True) AND humedad=80>70 (True). Ambas True → 'bochornoso'." }
+            { title: "String repetición", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="str">"ha"</span> * <span class="num">3</span>)`, options: ["ha ha ha", "hahaha", "ha*3", "3ha"], correct: 1, explanation: '"ha" * 3 repite el string 3 veces: "hahaha".' },
+            { title: "Tipo de dato", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="fn">type</span>(<span class="num">3.14</span>))`, options: ["&lt;class 'int'&gt;", "&lt;class 'float'&gt;", "&lt;class 'double'&gt;", "&lt;class 'number'&gt;"], correct: 1, explanation: "3.14 es un número decimal, por lo tanto es de tipo float." },
+            { title: "Booleano y comparación", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="num">5</span> == <span class="num">5.0</span>)`, options: ["False", "True", "Error", "None"], correct: 1, explanation: "Python compara valores, no tipos. 5 y 5.0 son iguales en valor → True." },
+            { title: "len() en string", difficulty: "easy", highlight: `<span class="fn">print</span>(<span class="fn">len</span>(<span class="str">"Python"</span>))`, options: ["5", "6", "7", "8"], correct: 1, explanation: '"Python" tiene 6 caracteres: P-y-t-h-o-n.' },
+            { title: "Concatenación de strings", difficulty: "easy", highlight: `a = <span class="str">"Hola"</span>\nb = <span class="str">" Mundo"</span>\n<span class="fn">print</span>(a + b)`, options: ["HolaMundo", "Hola Mundo", "Hola+Mundo", "Error"], correct: 1, explanation: 'Concatenar "Hola" + " Mundo" = "Hola Mundo".' },
+            { title: "Variable reasignada", difficulty: "easy", highlight: `x = <span class="num">10</span>\nx = x + <span class="num">5</span>\nx = x * <span class="num">2</span>\n<span class="fn">print</span>(x)`, options: ["30", "25", "20", "15"], correct: 0, explanation: "x=10 → x=10+5=15 → x=15*2=30." },
+            { title: "input() con int()", difficulty: "easy", highlight: `<span class="cm"># Asume que el usuario ingresa: 7</span>\nn = <span class="fn">int</span>(<span class="fn">input</span>())\n<span class="fn">print</span>(n * <span class="num">3</span>)`, options: ["777", "73", "21", "Error"], correct: 2, explanation: "int('7') convierte a entero. 7 * 3 = 21." },
+            { title: "f-string básico", difficulty: "easy", highlight: `nombre = <span class="str">"Ana"</span>\nedad = <span class="num">25</span>\n<span class="fn">print</span>(<span class="str">f"</span>{nombre}<span class="str"> tiene </span>{edad}<span class="str"> años"</span>)`, options: ["nombre tiene edad años", "Ana tiene 25 años", "{nombre} tiene {edad} años", "Error"], correct: 1, explanation: "Las f-strings insertan el valor de las variables dentro de { }." },
+            { title: "Índice negativo en lista", difficulty: "medium", highlight: `datos = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>]\n<span class="fn">print</span>(datos[-<span class="num">2</span>])`, options: ["30", "20", "40", "10"], correct: 0, explanation: "Índice -1 es el último (40), -2 es el penúltimo (30)." },
+            { title: "While con break", difficulty: "medium", highlight: `i = <span class="num">0</span>\n<span class="kw">while</span> i < <span class="num">10</span>:\n    i += <span class="num">3</span>\n    <span class="kw">if</span> i == <span class="num">6</span>:\n        <span class="kw">break</span>\n<span class="fn">print</span>(i)`, options: ["9", "6", "3", "10"], correct: 1, explanation: "i: 0→3→6. Cuando i==6 se ejecuta break y sale. print(i) = 6." },
+            { title: "Función con valor default", difficulty: "medium", highlight: `<span class="kw">def</span> <span class="fn">saludar</span>(nombre=<span class="str">"mundo"</span>):\n    <span class="fn">print</span>(<span class="str">f"Hola {nombre}"</span>)\n\n<span class="fn">saludar</span>()\n<span class="fn">saludar</span>(<span class="str">"Paco"</span>)`, options: ["Hola mundo\nHola Paco", "Hola\nHola Paco", "Error\nHola Paco", "Hola nombre\nHola Paco"], correct: 0, explanation: "Si no se pasa argumento, se usa el default 'mundo'. La segunda llamada usa 'Paco'." },
+            { title: "for con range: ¿cuántas veces?", difficulty: "easy", highlight: `cuenta = <span class="num">0</span>\n<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):\n    cuenta += <span class="num">1</span>\n<span class="fn">print</span>(cuenta)`, options: ["4", "5", "6", "0"], correct: 1, explanation: "range(5) genera 0,1,2,3,4 → 5 iteraciones." },
+            { title: "if / elif / else: ¿cuál rama?", difficulty: "easy", highlight: `x = <span class="num">0</span>\n<span class="kw">if</span> x > <span class="num">0</span>:\n    <span class="fn">print</span>(<span class="str">"positivo"</span>)\n<span class="kw">elif</span> x < <span class="num">0</span>:\n    <span class="fn">print</span>(<span class="str">"negativo"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"cero"</span>)`, options: ["positivo", "negativo", "cero", "Error"], correct: 2, explanation: "x=0 no es >0 ni <0, así que cae en el else → 'cero'." },
+            { title: "while: valor final", difficulty: "easy", highlight: `n = <span class="num">1</span>\n<span class="kw">while</span> n < <span class="num">50</span>:\n    n = n * <span class="num">2</span>\n<span class="fn">print</span>(n)`, options: ["32", "48", "64", "50"], correct: 2, explanation: "n: 1→2→4→8→16→32→64. Cuando n=64 ya no cumple n<50 y sale." },
+            { title: "for con continue", difficulty: "medium", highlight: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">6</span>):\n    <span class="kw">if</span> i % <span class="num">2</span> == <span class="num">0</span>:\n        <span class="kw">continue</span>\n    <span class="fn">print</span>(i, end=<span class="str">" "</span>)`, options: ["1 2 3 4 5", "2 4", "1 3 5", "1 2 3"], correct: 2, explanation: "continue salta la iteración cuando i es par. Solo se imprimen los impares: 1 3 5." },
+            { title: "if anidado", difficulty: "medium", highlight: `edad = <span class="num">20</span>\ntiene_id = <span class="kw">True</span>\n<span class="kw">if</span> edad >= <span class="num">18</span>:\n    <span class="kw">if</span> tiene_id:\n        <span class="fn">print</span>(<span class="str">"Puede entrar"</span>)\n    <span class="kw">else</span>:\n        <span class="fn">print</span>(<span class="str">"Sin ID"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"Menor de edad"</span>)`, options: ["Sin ID", "Menor de edad", "Puede entrar", "Error"], correct: 2, explanation: "edad=20 ≥ 18 → primer if True. tiene_id=True → segundo if True → 'Puede entrar'." },
+            { title: "for acumulando suma", difficulty: "easy", highlight: `suma = <span class="num">0</span>\n<span class="kw">for</span> n <span class="kw">in</span> [<span class="num">2</span>, <span class="num">4</span>, <span class="num">6</span>, <span class="num">8</span>]:\n    suma += n\n<span class="fn">print</span>(suma)`, options: ["24", "20", "10", "48"], correct: 1, explanation: "2+4+6+8 = 20." },
+            { title: "while con resta: ¿qué imprime?", difficulty: "medium", highlight: `i = <span class="num">10</span>\n<span class="kw">while</span> i > <span class="num">0</span>:\n    i -= <span class="num">3</span>\n<span class="fn">print</span>(i)`, options: ["1", "0", "-2", "-1"], correct: 2, explanation: "i: 10→7→4→1→-2. Cuando i=-2 ya no cumple i>0 y sale el bucle." },
+            { title: "for con break y else", difficulty: "medium", highlight: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):\n    <span class="kw">if</span> i == <span class="num">3</span>:\n        <span class="kw">break</span>\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"termino"</span>)\n<span class="fn">print</span>(i)`, options: ["termino\n3", "3", "termino", "4"], correct: 1, explanation: "El else del for solo corre si NO hubo break. Como sí hay break en i==3, el else se omite. Solo se imprime i=3." },
+            { title: "if con operador or", difficulty: "medium", highlight: `dia = <span class="str">"sabado"</span>\n<span class="kw">if</span> dia == <span class="str">"sabado"</span> <span class="kw">or</span> dia == <span class="str">"domingo"</span>:\n    <span class="fn">print</span>(<span class="str">"fin de semana"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"dia laboral"</span>)`, options: ["dia laboral", "fin de semana", "sabado", "Error"], correct: 1, explanation: "dia=='sabado' es True. Con or basta una condición True → 'fin de semana'." },
+            { title: "for dentro de for", difficulty: "medium", highlight: `cuenta = <span class="num">0</span>\n<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">3</span>):\n    <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(<span class="num">2</span>):\n        cuenta += <span class="num">1</span>\n<span class="fn">print</span>(cuenta)`, options: ["5", "6", "9", "3"], correct: 1, explanation: "El bucle exterior corre 3 veces, el interior 2 veces cada vez. Total: 3×2 = 6." },
+            { title: "while: nunca entra", difficulty: "easy", highlight: `x = <span class="num">5</span>\n<span class="kw">while</span> x > <span class="num">10</span>:\n    x += <span class="num">1</span>\n<span class="fn">print</span>(x)`, options: ["5", "10", "11", "Error"], correct: 0, explanation: "x=5 no cumple x>10 desde el inicio. El bucle nunca se ejecuta. print(x) = 5." },
+            { title: "if con not", difficulty: "medium", highlight: `llueve = <span class="kw">False</span>\n<span class="kw">if</span> <span class="kw">not</span> llueve:\n    <span class="fn">print</span>(<span class="str">"sin paraguas"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"lleva paraguas"</span>)`, options: ["lleva paraguas", "sin paraguas", "False", "Error"], correct: 1, explanation: "llueve=False. not False = True → entra al if → 'sin paraguas'." },
+            { title: "range con paso negativo", difficulty: "medium", highlight: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>, <span class="num">0</span>, -<span class="num">1</span>):\n    <span class="fn">print</span>(i, end=<span class="str">" "</span>)`, options: ["5 4 3 2 1 0", "5 4 3 2 1", "4 3 2 1 0", "0 1 2 3 4 5"], correct: 1, explanation: "range(5, 0, -1) genera 5,4,3,2,1. El 0 no se incluye (es el stop exclusivo)." },
+            { title: "break al encontrar valor", difficulty: "medium", highlight: `intentos = <span class="num">0</span>\nclave = <span class="str">"python"</span>\nrespuestas = [<span class="str">"java"</span>, <span class="str">"python"</span>, <span class="str">"c++"</span>]\n<span class="kw">for</span> r <span class="kw">in</span> respuestas:\n    intentos += <span class="num">1</span>\n    <span class="kw">if</span> r == clave:\n        <span class="kw">break</span>\n<span class="fn">print</span>(intentos)`, options: ["1", "2", "3", "0"], correct: 1, explanation: "1er intento: 'java' ≠ clave. 2do: 'python' == clave → break. intentos = 2." },
+            { title: "if con and: ambas condiciones", difficulty: "medium", highlight: `temp = <span class="num">22</span>\nhumedad = <span class="num">80</span>\n<span class="kw">if</span> temp > <span class="num">20</span> <span class="kw">and</span> humedad > <span class="num">70</span>:\n    <span class="fn">print</span>(<span class="str">"bochornoso"</span>)\n<span class="kw">elif</span> temp > <span class="num">20</span>:\n    <span class="fn">print</span>(<span class="str">"caliente"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="str">"fresco"</span>)`, options: ["caliente", "fresco", "bochornoso", "Error"], correct: 2, explanation: "temp=22>20 (True) AND humedad=80>70 (True). Ambas True → 'bochornoso'." }
         ];
+
+        const Q = BANK.sort(() => Math.random() - 0.5).slice(0, 10);
 
         let current = 0, score = 0, answered = false, results = [];
         let playerName = '', playerControl = '';
@@ -908,7 +917,16 @@
             const isCorrect = idx === q.correct;
 
             if (isCorrect) score++;
-            results.push({ title: q.title, correct: isCorrect, chosen: q.options[idx], answer: q.options[q.correct] });
+
+            // ── Guardar respuesta detallada ──────────────────────────
+            results.push({
+                pregunta: current + 1,           // número de pregunta (1-based)
+                titulo: q.title,
+                dificultad: q.difficulty,
+                correcta: isCorrect,
+                respuesta_dada: q.options[idx],        // texto de la opción elegida
+                respuesta_correcta: q.options[q.correct]   // texto de la opción correcta
+            });
 
             for (let i = 0; i < q.options.length; i++) {
                 document.getElementById(`opt-${i}`).disabled = true;
@@ -969,27 +987,27 @@
             document.getElementById('score-msg').textContent = msg;
             document.getElementById('score-sub').textContent = sub;
 
-            // ── Save to Supabase ─────────────────────────────────────
+            // ── Save to backend (puntaje + respuestas completas) ─────
             const wrap = document.getElementById('save-status-wrap');
             wrap.innerHTML = `<span class="save-status saving">⏳ Guardando resultado...</span>`;
 
-            const ok = await guardarResultado(playerName, playerControl, score, Q.length);
+            const ok = await guardarResultado(playerName, playerControl, score, Q.length, results);
 
             wrap.innerHTML = ok
                 ? `<span class="save-status saved">✓ Resultado guardado para <strong>${playerName}</strong></span>`
-                : `<span class="save-status error">⚠ No se pudo guardar (revisa la configuración de Supabase)</span>`;
+                : `<span class="save-status error">⚠ No se pudo guardar (revisa la configuración del backend)</span>`;
 
             // ── Review list ──────────────────────────────────────────
             const list = document.getElementById('review-list');
             list.innerHTML = results.map((r, i) => `
             <div class="review-item">
-              <span class="review-icon">${r.correct ? '✅' : '❌'}</span>
+              <span class="review-icon">${r.correcta ? '✅' : '❌'}</span>
               <div>
-                <div class="review-q">${i + 1}. ${r.title}</div>
+                <div class="review-q">${i + 1}. ${r.titulo}</div>
                 <div class="review-ans">
-                  ${r.correct
-                    ? `Tu respuesta: <span class="ok">${r.answer}</span>`
-                    : `Tu respuesta: <span class="fail">${r.chosen}</span> · Correcta: <span class="ok">${r.answer}</span>`}
+                  ${r.correcta
+                    ? `Tu respuesta: <span class="ok">${r.respuesta_correcta}</span>`
+                    : `Tu respuesta: <span class="fail">${r.respuesta_dada}</span> · Correcta: <span class="ok">${r.respuesta_correcta}</span>`}
                 </div>
               </div>
             </div>`).join('');
@@ -1001,21 +1019,18 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         let warnings = 0;
         const MAX_WARNINGS = 3;
-        let quizActive = false; // solo activo durante el quiz
+        let quizActive = false;
 
-        // ── Bloquear clic derecho ────────────────────────────────
         document.addEventListener('contextmenu', e => {
             if (quizActive) e.preventDefault();
         });
 
-        // ── Bloquear copy / paste / cut ──────────────────────────
         ['copy', 'paste', 'cut'].forEach(evt => {
             document.addEventListener(evt, e => {
                 if (quizActive) e.preventDefault();
             });
         });
 
-        // ── Bloquear F12, Ctrl+Shift+I/J/C/U y Ctrl+C/X/V/A ───
         document.addEventListener('keydown', e => {
             if (!quizActive) return;
             const blocked =
@@ -1028,17 +1043,14 @@
             }
         });
 
-        // ── Bloquear selección de texto con mouse ────────────────
         document.addEventListener('selectstart', e => {
             if (quizActive) e.preventDefault();
         });
 
-        // ── Bloquear drag de texto ───────────────────────────────
         document.addEventListener('dragstart', e => {
             if (quizActive) e.preventDefault();
         });
 
-        // ── Detectar cambio de tab / minimizar ventana ───────────
         document.addEventListener('visibilitychange', () => {
             if (!quizActive || document.visibilityState !== 'hidden') return;
             warnings++;
@@ -1075,7 +1087,6 @@
             quizActive = false;
             document.getElementById('cheat-modal').style.display = 'none';
             document.getElementById('quiz-wrapper').style.display = 'none';
-            // Force show score with penalty note
             score = 0;
             showScore();
             setTimeout(() => {
@@ -1085,10 +1096,14 @@
         }
 
         function restart() {
-            current = 0; score = 0; results = []; playerName = ''; playerControl = ''; quizActive = false; warnings = 0; document.getElementById('warn-badge').style.display = 'none'; document.body.classList.remove('no-select');
+            current = 0; score = 0; results = []; playerName = ''; playerControl = '';
+            quizActive = false; warnings = 0;
+            document.getElementById('warn-badge').style.display = 'none';
+            document.body.classList.remove('no-select');
             document.getElementById('score-screen').classList.remove('show');
             document.getElementById('name-screen').classList.remove('hide');
             nameInput.value = '';
+            controlInput.value = '';
             btnStart.disabled = true;
         }
     </script>
