@@ -857,26 +857,26 @@
         <span class="difficulty ${diffMap[q.difficulty]}">${diffLabel[q.difficulty]}</span>
       </div>
 
-      <div style="position:relative;">
-        <pre>${q.highlight}</pre>
-        <div style="
-          position: absolute; inset: 0;
-          pointer-events: none;
-          overflow: hidden;
-          border-radius: 8px;
-          display: flex; flex-direction: column;
-          justify-content: center; align-items: center; gap: 8px;
-        ">
-          ${Array(6).fill(`
-            <span style="
-              font-family: 'JetBrains Mono', monospace;
-              font-size: 11px; font-weight: 700;
-              color: rgba(255,255,255,0.09);
-              letter-spacing: 2px; white-space: nowrap;
-              transform: rotate(-20deg); display: block;
-            ">${playerName} &nbsp;·&nbsp; ${playerControl}</span>
-          `).join('')}
-        </div>
+<div style="
+  position: absolute; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 8px;
+">
+  ${Array(8).fill(0).map((_, i) => `
+    <div style="
+      position: absolute;
+      top: ${i * 22}px;
+      left: -20px; right: -20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 700;
+      color: rgba(255,255,255,0.13);
+      letter-spacing: 3px; white-space: nowrap;
+      transform: rotate(-10deg);
+      user-select: none;
+    ">${(`${playerName} · ${playerControl} · `).repeat(6)}</div>
+  `).join('')}
+</div>
       </div>
 
       <p class="options-label">¿Cuál es el output?</p>
